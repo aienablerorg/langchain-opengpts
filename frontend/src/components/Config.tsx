@@ -101,6 +101,10 @@ const TOOL_DESCRIPTIONS = {
   Arxiv: "Searches [Arxiv](https://arxiv.org/).",
   PubMed: "Searches [PubMed](https://pubmed.ncbi.nlm.nih.gov/).",
   Wikipedia: "Searches [Wikipedia](https://pypi.org/project/wikipedia/).",
+  Kubernetes: "Runs kubectl commands.",
+  "Splunk Logs": "Pulls logs from splunk.",
+  "Dynatrace Metrics": "Pull Metrics from Dynatrace.",
+  "Python REPL": "Executed code in Python REPL.",
 };
 
 function MultiOptionField(props: {

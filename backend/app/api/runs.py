@@ -15,7 +15,7 @@ from langchain.schema.runnable import RunnableConfig
 from langserve.callbacks import AsyncEventAggregatorCallback
 from langserve.schema import FeedbackCreateRequest
 from langserve.serialization import WellKnownLCSerializer
-from langserve.server import _get_base_run_id_as_str, _unpack_input
+from langserve.api_handler import _get_base_run_id_as_str, _unpack_input
 from langsmith.utils import tracing_is_enabled
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse
@@ -103,6 +103,7 @@ async def stream_run(
     input_, config, messages = await _run_input_and_config(request, opengpts_user_id)
     streamer = StreamMessagesHandler(messages + input_["messages"])
     event_aggregator = AsyncEventAggregatorCallback()
+    # console_callback = ConsoleCallbackHandler()
     config["callbacks"] = [streamer, event_aggregator]
 
     # Call the runnable in streaming mode,

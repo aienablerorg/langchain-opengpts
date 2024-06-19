@@ -12,6 +12,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        DOCKER_BUILDKIT: 1
     ports:
       - "8100:8100"  # Backend is accessible on localhost:8100
     depends_on:
@@ -19,9 +21,17 @@ services:
     env_file:
       - .env
       - .open-ai-env
+      - .langsmith-api-key
     environment:
       PORT: 8100
       REDIS_URL: "redis://redis:6379"
+      KUBECONFIG: "/backend/kubeconfig.yaml"
+      LANGCHAIN_TRACING_V2: "true"
+    volumes:
+      - /Users/ojasgosar/.kube:/root/.kube
+      - /Users/ojasgosar/.minikube:/root/.minikube
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build:

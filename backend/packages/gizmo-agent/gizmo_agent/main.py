@@ -21,11 +21,12 @@ from gizmo_agent.agent_types import (
 from gizmo_agent.tools import TOOL_OPTIONS, TOOLS, AvailableTools, get_retrieval_tool
 
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
-
+DEFAULT_CONFIGURABLE_TYPE = "agent"
 
 class ConfigurableAgent(RunnableBinding):
     tools: Sequence[str]
     agent: GizmoAgentType
+    type: str = DEFAULT_CONFIGURABLE_TYPE
     system_message: str = DEFAULT_SYSTEM_MESSAGE
     assistant_id: Optional[str] = None
     user_id: Optional[str] = None
@@ -35,6 +36,7 @@ class ConfigurableAgent(RunnableBinding):
         *,
         tools: Sequence[str],
         agent: GizmoAgentType = GizmoAgentType.GPT_35_TURBO,
+        type: str = DEFAULT_CONFIGURABLE_TYPE,
         system_message: str = DEFAULT_SYSTEM_MESSAGE,
         assistant_id: Optional[str] = None,
         kwargs: Optional[Mapping[str, Any]] = None,
@@ -54,8 +56,8 @@ class ConfigurableAgent(RunnableBinding):
                 _tools.append(TOOLS[_tool]())
         if agent == GizmoAgentType.GPT_35_TURBO:
             _agent = get_openai_function_agent(_tools, system_message)
-        # elif agent == GizmoAgentType.GPT_4:
-        #     _agent = get_openai_function_agent(_tools, system_message, gpt_4=True)
+        elif agent == GizmoAgentType.GPT_4:
+            _agent = get_openai_function_agent(_tools, system_message, gpt_4=True)
         elif agent == GizmoAgentType.AZURE_OPENAI:
             _agent = get_openai_function_agent(_tools, system_message, azure=True)
         elif agent == GizmoAgentType.CLAUDE2:
@@ -70,6 +72,7 @@ class ConfigurableAgent(RunnableBinding):
         super().__init__(
             tools=tools,
             agent=agent,
+            type=type,
             system_message=system_message,
             bound=agent_executor,
             kwargs=kwargs or {},
@@ -85,25 +88,25 @@ class AgentOutput(BaseModel):
     messages: Sequence[AnyMessage] = Field(..., extra={"widget": {"type": "chat"}})
 
 
-dnd_llm = ChatOpenAI(
-    model="gpt-3.5-turbo-1106", temperature=0, streaming=True
-).configurable_alternatives(
-    ConfigurableField(id="llm", name="LLM"),
-    default_key="gpt-35-turbo",
-    azure_openai=AzureChatOpenAI(
-        temperature=0,
-        deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
-        openai_api_base=os.environ["AZURE_OPENAI_API_BASE"],
-        openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-        openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
-        streaming=True,
-    ),
-)
+# dnd_llm = ChatOpenAI(
+#     model="gpt-3.5-turbo-1106", temperature=0, streaming=True
+# ).configurable_alternatives(
+#     ConfigurableField(id="llm", name="LLM"),
+#     default_key="gpt-35-turbo",
+#     azure_openai=AzureChatOpenAI(
+#         temperature=0,
+#         deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+#         openai_api_base=os.environ["AZURE_OPENAI_API_BASE"],
+#         openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+#         openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
+#         streaming=True,
+#     ),
+# )
 
 
-dnd_bot = create_dnd_bot(dnd_llm, checkpoint=RedisCheckpoint()).with_types(
-    input_type=AgentInput, output_type=AgentOutput
-)
+# dnd_bot = create_dnd_bot(dnd_llm, checkpoint=RedisCheckpoint()).with_types(
+#     input_type=AgentInput, output_type=AgentOutput
+# )
 
 
 agent = (
@@ -114,24 +117,25 @@ agent = (
         assistant_id=None,
     )
     .configurable_fields(
-        agent=ConfigurableField(id="agent_type", name="Agent Type"),
-        system_message=ConfigurableField(id="system_message", name="System Message"),
+        type=ConfigurableField(id="type", name="Type"),
+        agent=ConfigurableField(id="type==agent/agent_type", name="Agent Type"),
+        system_message=ConfigurableField(id="type==agent/system_message", name="System Message"),
         assistant_id=ConfigurableField(
             id="assistant_id", name="Assistant ID", is_shared=True
         ),
         tools=ConfigurableFieldMultiOption(
-            id="tools",
+            id="type==agent/tools",
             name="Tools",
             options=TOOL_OPTIONS,
             default=[],
         ),
     )
-    .configurable_alternatives(
-        ConfigurableField(id="type", name="Bot Type"),
-        default_key="agent",
-        prefix_keys=True,
-        dungeons_and_dragons=dnd_bot,
-    )
+    # .configurable_alternatives(
+    #     ConfigurableField(id="type", name="Bot Type"),
+    #     default_key="agent",
+    #     prefix_keys=True,
+    #     dungeons_and_dragons=dnd_bot,
+    # )
     .with_types(input_type=AgentInput, output_type=AgentOutput)
 )
 

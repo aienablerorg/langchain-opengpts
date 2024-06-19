@@ -1,4 +1,6 @@
 .env.gcp.yaml
 .DS_Store
 .open-ai-env
+.langsmith-api-key
 redis-volume/dump.rdb
+**/*.txt

@@ -15,6 +15,8 @@ from permchain import Channel, Pregel, ReservedChannels
 from permchain.channels import Topic
 from permchain.checkpoint.base import BaseCheckpointAdapter
 
+from agent_executor.utils import map_chunk_to_msg
+
 
 def _create_agent_message(
     output: AgentAction | AgentFinish
@@ -22,7 +24,7 @@ def _create_agent_message(
     if isinstance(output, AgentAction):
         if isinstance(output, AgentActionMessageLog):
             output.message_log[-1].additional_kwargs["agent"] = output
-            messages = output.message_log
+            messages = [map_chunk_to_msg(m) for m in output.message_log]
             output.message_log = []  # avoid circular reference for json dumps
             return messages
         else:
@@ -123,4 +125,5 @@ def get_agent_executor(
         input=["messages"],
         output=["messages"],
         checkpoint=checkpoint,
+        debug=True,
     )
